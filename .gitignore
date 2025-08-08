@@ -20,3 +20,5 @@ dist
 
 # Miscellaneous
 DS_Store
+
+.env
