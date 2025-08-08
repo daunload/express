@@ -7,7 +7,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      PORT: ${{ secrets.PORT }}
       DB_URL: ${{ secrets.DB_URL }}
       DB_NAME: ${{ secrets.DB_NAME }}
     steps:
@@ -30,7 +29,11 @@ jobs:
             options:
               env: []
               buildenv: []
+              install: pnpm i
+              build: pnpm build
+              start: pnpm start
             context:
               git:
                 url: git@github.com:${{ github.repository }}.git
                 ref: ${{ github.ref }}
+
