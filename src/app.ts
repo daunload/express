@@ -4,6 +4,7 @@ import { connectToDatabase } from './db';
 import { scheduleRouter } from './routes/scheduleRouter';
 
 const app = express();
+console.log(process.env.PORT);
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
