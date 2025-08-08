@@ -16,7 +16,6 @@ export const getAllSchedules = async (req: Request, res: Response) => {
 
 export const addSchedule = async (req: Request, res: Response) => {
 	try {
-		console.log(req.body);
 		const { title, action_date } = req.body;
 		const db = getDatabase();
 		const schedules = await db.collection('schedule').insertOne({
