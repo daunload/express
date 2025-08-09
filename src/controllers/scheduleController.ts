@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb';
 import type { Request, Response } from 'express';
 import { getDatabase } from '../db';
 
@@ -27,6 +28,22 @@ export const addSchedule = async (req: Request, res: Response) => {
 		console.error('스케쥴 추가 오류:', error);
 		res.status(500).json({
 			message: '스케쥴 추가 중 오류가 발생했습니다.',
+		});
+	}
+};
+
+export const removeSchedule = async (req: Request, res: Response) => {
+	try {
+		const { id } = req.body;
+		const db = getDatabase();
+		const schedules = await db.collection('schedule').deleteOne({
+			_id: new ObjectId(id as string),
+		});
+		res.status(200).json(schedules);
+	} catch (error) {
+		console.error('스케쥴 삭제 오류:', error);
+		res.status(500).json({
+			message: '스케쥴 삭제 중 오류가 발생했습니다.',
 		});
 	}
 };
