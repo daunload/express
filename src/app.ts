@@ -4,21 +4,27 @@ import { connectToDatabase } from './db';
 import { scheduleRouter } from './routes/scheduleRouter';
 
 const app = express();
-console.log(process.env.PORT);
-const PORT = process.env.PORT || 3000;
+
+const PORT = Number(process.env.PORT) || 10000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 app.use(express.json());
+
 app.get('/', (req, res) => {
-	res.send('Hello, Cloudtype!');
+	res.send('어딜 들어와 꺼져');
 });
+
 app.use('/schedule', scheduleRouter);
 
-app.listen(PORT, async () => {
+const server = app.listen(PORT, HOST, async () => {
 	try {
 		await connectToDatabase();
-		console.log(`🚀 Server is running on http://localhost:${PORT}`);
+		console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
 	} catch (error) {
 		console.error('서버 시작 오류:', error);
 		process.exit(1);
 	}
 });
+
+server.keepAliveTimeout = 120_000; // 120초
+server.headersTimeout = 121_000; // keepAliveTimeout보다 약간 크게
