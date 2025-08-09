@@ -1,14 +1,10 @@
 import express, { type Router } from 'express';
-import {
-	addSchedule,
-	getAllSchedules,
-	removeSchedule,
-} from '../controllers/scheduleController';
+import { ScheduleController } from '../controllers/scheduleController';
 
 const scheduleRouter: Router = express.Router();
 
-scheduleRouter.get('/', getAllSchedules);
-scheduleRouter.post('/add', addSchedule);
-scheduleRouter.post('/remove', removeSchedule);
+scheduleRouter.get('/', ScheduleController.getAll);
+scheduleRouter.post('/add', ScheduleController.create);
+scheduleRouter.post('/remove', ScheduleController.remove);
 
 export { scheduleRouter };
