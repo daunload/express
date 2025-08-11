@@ -2,6 +2,7 @@
 	"editor.formatOnSave": true,
 	"editor.defaultFormatter": "biomejs.biome",
 	"editor.codeActionsOnSave": {
-		"source.biome": "always"
+		"source.biome": "always",
+		"source.organizeImports.biome": "always"
 	}
 }

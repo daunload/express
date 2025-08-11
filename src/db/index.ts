@@ -2,18 +2,17 @@ import mongoose from 'mongoose';
 
 const connectToDatabase = async () => {
 	const dbUrl = process.env.DB_URL;
-	const dbName = process.env.DB_NAME || 'auto_deploy';
+	const dbName = process.env.DB_NAME;
 
-	if (!dbUrl) {
-		throw new Error('DB_URL 환경변수가 설정되지 않았습니다.');
-	}
+	if (!dbUrl) throw new Error('DB_URL 환경변수가 설정되지 않았습니다.');
+    if (!dbName) throw new Error('dbName 환경변수가 설정되지 않았습니다.');
 
 	try {
 		console.log('MongoDB에 연결 중...');
 		await mongoose.connect(dbUrl, {
 			dbName,
 			autoIndex: true,
-			serverSelectionTimeoutMS: 5000,
+			serverSelectionTimeoutMS: 15000,
 			socketTimeoutMS: 45000,
 		});
 

@@ -7,24 +7,23 @@ export const ScheduleService = {
 		return ScheduleModel.find().sort({ startsAt: 1 }).lean();
 	},
 
-	async create(data: { title: string; action_date: string }) {
-		if (!data.title?.trim()) {
-			throw new AppError('INVALID_INPUT', 400, '제목은 필수입니다.');
-		}
-		if (Date.now() > new Date(data.action_date).getTime()) {
-			throw new AppError(
-				'INVALID_INPUT',
-				400,
-				'유효하지 않은 actionDate',
-			);
-		}
-		const schedule = await ScheduleModel.insertOne({
-			title: data.title,
-			action_date: data.action_date,
+	async create(title: string, actionDate: string) {
+		const schedule = await ScheduleModel.create({
+			title: title,
+			action_date: actionDate,
 		});
 
 		return schedule.toObject();
 	},
+
+    async done(id: string) {
+        const { upsertedId, acknowledged, matchedCount } = await ScheduleModel.updateOne({ _id: id }, { is_done: true });
+
+        if (!acknowledged) throw new Error("Mongo write not acknowledged");
+        if (matchedCount === 0 && !upsertedId) throw new Error("No document matched the filter");
+
+        return { done: true};
+    },
 
 	async remove(id: string) {
 		if (!isValidObjectId(id)) {
