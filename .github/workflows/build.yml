@@ -1,18 +1,22 @@
 name: build
+
+on:
+  workflow_dispatch:
+
 jobs:
-    publish:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Install Node.js
-              uses: actions/setup-node@v3
-              with:
-                  node-version: 22.14.0
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.14.0
 
-            - name: Check Node.js version
-              run: node -v
+      - name: Check Node.js version
+        run: node -v
 
-            - name: Install dependencies using pnpm i
-              run: pnpm i
+      - name: Install dependencies using pnpm i
+        run: pnpm i
 
-            - name: Build express
-              run: pnpm build
+      - name: Build express
+        run: pnpm build
