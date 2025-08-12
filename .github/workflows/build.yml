@@ -1,0 +1,51 @@
+name: build
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Install Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 22.14.0
+
+            - name: Check Node.js version
+              run: node -v
+
+            - name: Install dependencies using pnpm i
+              run: pnpm i
+
+            - name: Build express
+              run: pnpm build
+
+              uses: actions/github-script@v7
+              env:
+                  PUPPETEER_LOGS: ${{ steps.error_check_step.outputs.logs }}
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      const logs = process.env.PUPPETEER_LOGS;
+                      const targetBranch = process.env.TARGET_BRANCH;
+
+                      // 배포 환경 결정
+                      const environment = targetBranch === 'stage-deploy' ? 'Staging' : 'Production';
+                      const deploymentEmoji = targetBranch === 'stage-deploy' ? '🚀' : '🎉';
+
+                      const body = [
+                        `### ${deploymentEmoji} ${environment} Deployment Completed`,
+                        '',
+                        `**Environment:** ${environment}`,
+                        `**Target Branch:** ${targetBranch}`,
+                        `**Deployment Status:** ✅ Success`,
+                        '',
+                        '### 🐛 Puppeteer Error Logs',
+                        '```',
+                        logs,
+                        '```',
+                      ].join('\n');
+
+                      await github.rest.issues.createComment({
+                        owner: context.repo.owner,
+                        repo:  context.repo.repo,
+                        issue_number: context.payload.pull_request.number,
+                        body,
+                      });
