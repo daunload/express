@@ -3,7 +3,6 @@ import AppError from '../utils/errors';
 
 const scheduleJobs = new Map<string, Cron>();
 export const ScheduleJobService = {
-	init() {},
 	create(id: string, actionDate: string, callback: () => void) {
 		if (scheduleJobs.has(id))
 			throw new AppError('id가 중복되었습니다.', 400);

@@ -5,6 +5,28 @@ import { ScheduleJobService } from './scheduleJobService';
 import { WorkflowService } from './workflowService';
 
 export const ScheduleService = {
+	async init() {
+		const schedules = await ScheduleModel.find({}).lean();
+
+		for (const schedule of schedules) {
+			if (Date.now() > new Date(schedule.action_date).getTime()) {
+				await ScheduleModel.updateOne(
+					{ _id: schedule._id },
+					{ $set: { is_done: true } },
+				);
+			} else {
+				ScheduleJobService.create(
+					schedule._id.toString(),
+					schedule.action_date,
+					() => {
+						ScheduleService.done(schedule._id.toString());
+						WorkflowService.triggerWorkflow();
+					},
+				);
+			}
+		}
+	},
+
 	async getAll() {
 		return ScheduleModel.find().sort({ action_date: 1 }).lean();
 	},

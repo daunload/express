@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import { connectToDatabase } from './db';
 import { scheduleRouter } from './routes/scheduleRouter';
+import { ScheduleService } from './services/scheduleService';
 
 const app = express();
 
@@ -19,6 +20,8 @@ app.use('/schedule', scheduleRouter);
 const server = app.listen(PORT, HOST, async () => {
 	try {
 		await connectToDatabase();
+		await ScheduleService.init();
+
 		console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
 	} catch (error) {
 		console.error('서버 시작 오류:', error);
