@@ -1,42 +1,84 @@
-import { isValidObjectId } from 'mongoose';
+import { isValidObjectId, startSession } from 'mongoose';
 import { ScheduleModel } from '../models/scheduleModel';
-import { AppError } from '../utils/errors';
+import AppError from '../utils/errors';
+import { ScheduleJobService } from './scheduleJobService';
+import { WorkflowService } from './workflowService';
 
 export const ScheduleService = {
 	async getAll() {
-		return ScheduleModel.find().sort({ startsAt: 1 }).lean();
+		return ScheduleModel.find().sort({ action_date: 1 }).lean();
 	},
 
 	async create(title: string, actionDate: string) {
-		const schedule = await ScheduleModel.create({
-			title: title,
-			action_date: actionDate,
-		});
+		const session = await startSession();
+		session.startTransaction();
 
-		return schedule.toObject();
+		try {
+			const schedule = await ScheduleModel.create(
+				[
+					{
+						title: title,
+						action_date: actionDate,
+					},
+				],
+				{ session },
+			);
+
+			const newSchedule = schedule[0];
+
+			if (!newSchedule) throw new Error('스케쥴 생성 실패');
+
+			ScheduleJobService.create(
+				newSchedule._id.toString(),
+				actionDate,
+				() => {
+					ScheduleService.done(newSchedule._id.toString());
+					WorkflowService.triggerWorkflow();
+				},
+			);
+
+			await session.commitTransaction();
+			return newSchedule.toObject();
+		} catch (error) {
+			await session.abortTransaction();
+			throw error;
+		} finally {
+			session.endSession();
+		}
 	},
 
-    async done(id: string) {
-        const { upsertedId, acknowledged, matchedCount } = await ScheduleModel.updateOne({ _id: id }, { is_done: true });
+	async done(id: string) {
+		if (!isValidObjectId(id)) {
+			throw new AppError('유효하지 않은 ObjectId입니다.', 400);
+		}
 
-        if (!acknowledged) throw new Error("Mongo write not acknowledged");
-        if (matchedCount === 0 && !upsertedId) throw new Error("No document matched the filter");
+		const updatedSchedule = await ScheduleModel.findByIdAndUpdate(
+			id,
+			{ is_done: true },
+			{ new: true },
+		).lean();
 
-        return { done: true};
-    },
+		if (!updatedSchedule) {
+			throw new AppError('상태를 업데이트할 스케줄이 없습니다.', 404);
+		}
+
+		return updatedSchedule;
+	},
 
 	async remove(id: string) {
 		if (!isValidObjectId(id)) {
-			throw new AppError(
-				'INVALID_ID',
-				400,
-				'유효하지 않은 ObjectId입니다.',
-			);
+			throw new AppError('유효하지 않은 ObjectId입니다.', 400);
 		}
-		const { deletedCount } = await ScheduleModel.deleteOne({ _id: id });
-		if (!deletedCount) {
-			throw new AppError('NOT_FOUND', 404, '삭제할 스케줄이 없습니다.');
+
+		const deletedSchedule =
+			await ScheduleModel.findByIdAndDelete(id).lean();
+
+		if (!deletedSchedule) {
+			throw new AppError('삭제할 스케줄이 없습니다.', 404);
 		}
-		return { deleted: true };
+
+		ScheduleJobService.remove(id);
+
+		return deletedSchedule;
 	},
 };

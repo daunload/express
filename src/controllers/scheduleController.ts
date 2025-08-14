@@ -1,14 +1,12 @@
 import type { NextFunction, Request, Response } from 'express';
-import { ScheduleJobService } from '../services/scheduleJobService';
 import { ScheduleService } from '../services/scheduleService';
 import { isValidUTCISO } from '../utils/day';
-import { AppError } from '../utils/errors';
-import { WorkflowController } from './workflowController';
+import AppError from '../utils/errors';
 
 export const ScheduleController = {
 	async getAll(req: Request, res: Response, next: NextFunction) {
 		try {
-			const result = await ScheduleService.getAll();
+			const result = ScheduleService.getAll();
 			res.json(result);
 		} catch (err) {
 			next(err);
@@ -21,8 +19,6 @@ export const ScheduleController = {
 		try {
 			const result = await ScheduleService.remove(id);
 			res.json(result);
-
-			ScheduleJobService.remove(id);
 		} catch (err) {
 			next(err);
 		}
@@ -33,35 +29,17 @@ export const ScheduleController = {
 
 		try {
 			if (!title || !title.trim())
-				throw new AppError('INVALID_INPUT', 400, '제목 입력해줘');
+				throw new AppError('제목 입력해줘', 400);
 
-			if (!isValidUTCISO(action_date)) {
-				throw new AppError(
-					'INVALID_INPUT',
-					400,
-					'유효하지 않은 actionDate',
-				);
-			}
-
-			if (Date.now() > new Date(action_date).getTime()) {
-				throw new AppError(
-					'INVALID_INPUT',
-					400,
-					'유효하지 않은 actionDate',
-				);
+			if (
+				!isValidUTCISO(action_date) ||
+				Date.now() > new Date(action_date).getTime()
+			) {
+				return next(new AppError('유효하지 않은 actionDate', 400));
 			}
 
 			const result = await ScheduleService.create(title, action_date);
 			res.status(201).json(result);
-
-			ScheduleJobService.create(
-				result._id.toString(),
-				action_date,
-				() => {
-					ScheduleService.done(result._id.toString());
-					WorkflowController.triggerAction(req, res);
-				},
-			);
 		} catch (err) {
 			next(err);
 		}
